@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="manifest" href="manifest.json">
+
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LucioBR - Timer & Tarefas</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #0e0e14;
+      background-size: cover;
+      color: #e0e0ff;
+      margin: 0;
+      padding: 20px;
+    }
+
+    h1 {
+      color: #a259ff;
+      text-shadow: 1px 1px 3px #000;
+      text-align: center;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: auto;
+      background-color: #1c1b29;
+      padding: 20px;
+      border-radius: 15px;
+      box-shadow: 0 0 15px #a259ff60;
+    }
+
+    input, button, textarea, select {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      border: none;
+      border-radius: 10px;
+      font-size: 1rem;
+    }
+
+    input, textarea, select {
+      background-color: #2e2b40;
+      color: #e0e0ff;
+    }
+
+    button {
+      background-color: #a259ff;
+      color: white;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #8a3fe6;
+    }
+
+    .task {
+      background-color: #2e2b40;
+      padding: 10px;
+      margin-top: 10px;
+      border-radius: 8px;
+      box-shadow: 0 0 5px #00000080;
+    }
+
+    .controls {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    #timerDisplay {
+      font-size: 2rem;
+      text-align: center;
+      margin: 20px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>LucioBR - Tarefas & Timer</h1>
+
+    <div class="controls">
+      <button onclick="startTimer()">Iniciar</button>
+      <button onclick="pauseTimer()">Pausar</button>
+      <button onclick="resetTimer()">Zerar</button>
+    </div>
+
+    <div id="timerDisplay">00:00:00</div>
+
+    <input type="text" id="taskName" placeholder="Nome da tarefa">
+    <input type="text" id="taskTime" placeholder="Tempo manual (ex: 1h 30min)">
+    <button onclick="addTask()">Adicionar Tarefa</button>
+
+    <div id="tasks"></div>
+  </div>
+
+  <script>
+    let timer = 0;
+    let interval = null;
+
+    function updateTimerDisplay() {
+      const hours = String(Math.floor(timer / 3600)).padStart(2, '0');
+      const minutes = String(Math.floor((timer % 3600) / 60)).padStart(2, '0');
+      const seconds = String(timer % 60).padStart(2, '0');
+      document.getElementById('timerDisplay').textContent = `${hours}:${minutes}:${seconds}`;
+    }
+
+    function startTimer() {
+      if (interval) return;
+      interval = setInterval(() => {
+        timer++;
+        updateTimerDisplay();
+      }, 1000);
+    }
+
+    function pauseTimer() {
+      clearInterval(interval);
+      interval = null;
+    }
+
+    function resetTimer() {
+      pauseTimer();
+      timer = 0;
+      updateTimerDisplay();
+    }
+
+    function addTask() {
+      const name = document.getElementById('taskName').value;
+      const manualTime = document.getElementById('taskTime').value;
+      const time = timer > 0 ? document.getElementById('timerDisplay').textContent : manualTime;
+      if (!name || !time) return alert("Preencha o nome e tempo da tarefa.");
+
+      const task = { name, time };
+      const tasks = JSON.parse(localStorage.getItem('tasks') || '[]');
+      tasks.push(task);
+      localStorage.setItem('tasks', JSON.stringify(tasks));
+      renderTasks();
+      resetTimer();
+      document.getElementById('taskName').value = '';
+      document.getElementById('taskTime').value = '';
+    }
+
+    function renderTasks() {
+      const tasks = JSON.parse(localStorage.getItem('tasks') || '[]');
+      const container = document.getElementById('tasks');
+      container.innerHTML = '';
+      tasks.forEach((t, index) => {
+        const div = document.createElement('div');
+        div.className = 'task';
+        div.innerHTML = `<strong>${t.name}</strong><br><span>${t.time}</span><br><button onclick="removeTask(${index})">Remover</button>`;
+        container.appendChild(div);
+      });
+    }
+
+    function removeTask(index) {
+      const tasks = JSON.parse(localStorage.getItem('tasks') || '[]');
+      tasks.splice(index, 1);
+      localStorage.setItem('tasks', JSON.stringify(tasks));
+      renderTasks();
+    }
+
+    renderTasks();
+    updateTimerDisplay();
+  </script>
+</body>
+</html>
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('service-worker.js')
+        .then(() => console.log("Service Worker registrado"))
+        .catch(error => console.error("Erro no Service Worker:", error));
+    });
+  }
+</script>
